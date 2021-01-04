@@ -59,7 +59,7 @@ public:
 			auto bytesNeeded = DWORD{ 0 };
 			auto ssp = SERVICE_STATUS_PROCESS {0};
 
-			auto result = ::QueryServiceStatusEx(srvHandle, SC_STATUS_PROCESS_INFO, reinterpret_cast<LPBYTE>(&ssp), sizeof(ssp), &bytesNeeded);
+			auto result = QueryServiceStatusEx(srvHandle, SC_STATUS_PROCESS_INFO, reinterpret_cast<LPBYTE>(&ssp), sizeof(ssp), &bytesNeeded);
 
 			if (result != 0) {
 				status = static_cast<ServiceStatus>(ssp.dwCurrentState);
@@ -73,7 +73,7 @@ public:
 		auto success = false;
 
 		if (srvHandle) {
-			auto result = ::StartService(srvHandle, 0, nullptr);
+			auto result = StartServiceA(srvHandle, 0, nullptr);
 			success = result != 0;
 		}
 
@@ -121,7 +121,7 @@ public:
 		auto success = false;
 
 		if (srvHandle) {
-			success = ::DeleteService(srvHandle) != 0;
+			success = DeleteService(srvHandle) != 0;
 
 			if (success) {
 				srvHandle = nullptr;
@@ -241,21 +241,21 @@ private:
 		auto bytesNeeded = DWORD{ 0 };
 		auto count = DWORD{ 0 };
 
-		if (!::EnumDependentServices(srvHandle, SERVICE_ACTIVE, nullptr, 0, &bytesNeeded, &count)) {
+		if (!EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, nullptr, 0, &bytesNeeded, &count)) {
 			if (GetLastError() != ERROR_MORE_DATA) {
 				return false;
 			}
 
 			std::vector<unsigned char> buffer(bytesNeeded, 0);
 
-			if (!::EnumDependentServices(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUS>(buffer.data()), bytesNeeded, &bytesNeeded, &count)) {
+			if (!EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data()), bytesNeeded, &bytesNeeded, &count)) {
 				return false;
 			}
 
 			for (auto i = DWORD{ 0 }; i < count; ++i) {
-				auto ess = static_cast<ENUM_SERVICE_STATUS>(*(reinterpret_cast<LPENUM_SERVICE_STATUS>(buffer.data() + i)));
+				auto ess = static_cast<ENUM_SERVICE_STATUSA>(*(reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data() + i)));
 
-				ServiceHandle handle = ::OpenService(scHandle, ess.lpServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS);
+				ServiceHandle handle = OpenServiceA(scHandle, ess.lpServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS);
 
 				if (!handle) {
 					return false;
