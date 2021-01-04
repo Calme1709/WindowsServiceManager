@@ -31,3 +31,7 @@ ServiceStartType StringToServiceStartType(string startType) {
 void PushToNapiArray(Napi::Array array, Napi::Value value) {
     array.Set(array.Length(), value);
 }
+
+const char *c_str(const std::string *str) {
+    return str == nullptr ? nullptr : str->c_str();
+}

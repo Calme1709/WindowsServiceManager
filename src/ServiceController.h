@@ -167,8 +167,7 @@ private:
    ServiceHandle srvHandle;
    string srvName;
 
-   std::map<ServiceControls, bool> acceptedControls = 
-   {
+   std::map<ServiceControls, bool> acceptedControls = {
       { ServiceControls::Stop, false},
       { ServiceControls::PauseAndContinue, false },
       { ServiceControls::ChangeParams, false },
@@ -183,28 +182,23 @@ private:
       { ServiceControls::UserModeNotification, false },
    };
 
-   static std::chrono::milliseconds GetWaitTime(DWORD const waitHint)
-   {
+   static std::chrono::milliseconds GetWaitTime(DWORD const waitHint) {
       auto waitTime = waitHint / 10;
 
-      if (waitTime < 1000)
+      if (waitTime < 1000) {
          waitTime = 1000;
-      else if (waitTime > 10000)
+      } else if (waitTime > 10000) {
          waitTime = 10000;
+      }
 
       return std::chrono::milliseconds(waitTime);
    }
 
-   static bool ChangeServiceStatus(SC_HANDLE const handle, DWORD const controlCode, SERVICE_STATUS_PROCESS& ssp)
-   {
+   static bool ChangeServiceStatus(SC_HANDLE const handle, DWORD const controlCode, SERVICE_STATUS_PROCESS& ssp) {
       auto success = false;
 
-      if (handle)
-      {
-         auto result = ::ControlService(
-            handle,
-            controlCode,
-            reinterpret_cast<LPSERVICE_STATUS>(&ssp));
+      if (handle) {
+         auto result = ControlService(handle, controlCode, reinterpret_cast<LPSERVICE_STATUS>(&ssp));
 
          success = result != 0;
       }
@@ -212,96 +206,73 @@ private:
       return success;
    }
 
-   static bool WaitForStatus(SC_HANDLE const handle, SERVICE_STATUS_PROCESS& ssp, ServiceStatus const desireStatus, std::chrono::milliseconds const timeout = 30000ms)
-   {
+   static bool WaitForStatus(SC_HANDLE const handle, SERVICE_STATUS_PROCESS& ssp, ServiceStatus const desireStatus, std::chrono::milliseconds const timeout = 30000ms) {
       auto success = ssp.dwCurrentState == static_cast<DWORD>(desireStatus);
 
-      if (!success && handle)
-      {
+      if (!success && handle) {
          auto start = std::chrono::high_resolution_clock::now();
          auto waitTime = GetWaitTime(ssp.dwWaitHint);
 
-         while (ssp.dwCurrentState != static_cast<DWORD>(desireStatus))
-         {
+         while (ssp.dwCurrentState != static_cast<DWORD>(desireStatus)) {
             std::this_thread::sleep_for(waitTime);
 
             auto bytesNeeded = DWORD{ 0 };
 
-            if (!::QueryServiceStatusEx(
-               handle,
-               SC_STATUS_PROCESS_INFO,
-               reinterpret_cast<LPBYTE>(&ssp),
-               sizeof(ssp),
-               &bytesNeeded))
+            if (!QueryServiceStatusEx(handle, SC_STATUS_PROCESS_INFO, reinterpret_cast<LPBYTE>(&ssp), sizeof(ssp), &bytesNeeded)) {
                break;
+            }
 
-            if (ssp.dwCurrentState == static_cast<DWORD>(desireStatus))
-            {
+            if (ssp.dwCurrentState == static_cast<DWORD>(desireStatus)) {
                success = true;
                break;
             }
 
-            if (std::chrono::high_resolution_clock::now() - start > timeout)
+            if (std::chrono::high_resolution_clock::now() - start > timeout) {
                break;
+            }
          }
       }
 
       return success;
    }
 
-   bool StopDependentServices()
-   {
+   bool StopDependentServices() {
       auto ess = ENUM_SERVICE_STATUS{ 0 };
       auto bytesNeeded = DWORD{ 0 };
       auto count = DWORD{ 0 };
 
-      if (!::EnumDependentServices(
-         srvHandle,
-         SERVICE_ACTIVE,
-         nullptr,
-         0,
-         &bytesNeeded,
-         &count))
-      {
-         if (GetLastError() != ERROR_MORE_DATA)
-            return false;
-
-         std::vector<unsigned char> buffer(bytesNeeded, 0);
-
-         if (!::EnumDependentServices(
-            srvHandle,
-            SERVICE_ACTIVE,
-            reinterpret_cast<LPENUM_SERVICE_STATUS>(buffer.data()),
-            bytesNeeded,
-            &bytesNeeded,
-            &count))
-         {
+      if (!::EnumDependentServices(srvHandle, SERVICE_ACTIVE, nullptr, 0, &bytesNeeded, &count)) {
+         if (GetLastError() != ERROR_MORE_DATA) {
             return false;
          }
 
-         for (auto i = DWORD{ 0 }; i < count; ++i)
-         {
+         std::vector<unsigned char> buffer(bytesNeeded, 0);
+
+         if (!::EnumDependentServices(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUS>(buffer.data()), bytesNeeded, &bytesNeeded, &count)) {
+            return false;
+         }
+
+         for (auto i = DWORD{ 0 }; i < count; ++i) {
             auto ess = static_cast<ENUM_SERVICE_STATUS>(*(reinterpret_cast<LPENUM_SERVICE_STATUS>(buffer.data() + i)));
 
-            ServiceHandle handle = ::OpenService(
-               scHandle,
-               ess.lpServiceName,
-               SERVICE_STOP | SERVICE_QUERY_STATUS);
+            ServiceHandle handle = ::OpenService(scHandle, ess.lpServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS);
 
-            if (!handle)
+            if (!handle) {
                return false;
+            }
 
             auto ssp = SERVICE_STATUS_PROCESS{ 0 };
 
-            if (!ChangeServiceStatus(handle, SERVICE_CONTROL_STOP, ssp))
+            if (!ChangeServiceStatus(handle, SERVICE_CONTROL_STOP, ssp)) {
                return false;
+            }
 
-            if (!WaitForStatus(handle, ssp, ServiceStatus::Stopped))
+            if (!WaitForStatus(handle, ssp, ServiceStatus::Stopped)) {
                return false;
+            }
          }
       }
 
       return true;
    }
-
 };

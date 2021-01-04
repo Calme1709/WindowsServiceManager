@@ -63,8 +63,7 @@ public:
 		return result;
 	}
 
-	bool ChangeStartErrorControl(ServiceErrorControl const control)
-	{
+	bool ChangeStartErrorControl(ServiceErrorControl const control) {
 		auto result = false;
 
 		if (ChangeServiceConfigA(
@@ -101,27 +100,15 @@ public:
 		return result;
 	}
 
-	void Refresh()
-	{
+	void Refresh() {
 		auto bytesNeeded = DWORD{ 0 };
 
-		if (!QueryServiceConfigA(
-			srvHandle,
-			nullptr,
-			0,
-			&bytesNeeded))
-		{
-			if (ERROR_INSUFFICIENT_BUFFER == ::GetLastError())
-			{
+		if (!QueryServiceConfigA(srvHandle, nullptr, 0, &bytesNeeded)) {
+			if (ERROR_INSUFFICIENT_BUFFER == ::GetLastError()) {
 				std::vector<unsigned char> buffer(bytesNeeded, 0);
 
 				auto lpsc = reinterpret_cast<LPQUERY_SERVICE_CONFIGA>(buffer.data());
-				if (QueryServiceConfigA(
-					srvHandle,
-					lpsc,
-					bytesNeeded,
-					&bytesNeeded))
-				{
+				if (QueryServiceConfigA(srvHandle, lpsc, bytesNeeded, &bytesNeeded)) {
 					type = (ServiceType)lpsc->dwServiceType;
 					startType = (ServiceStartType)lpsc->dwStartType;
 					errorControl = (ServiceErrorControl)lpsc->dwErrorControl;
@@ -136,24 +123,11 @@ public:
 		}
 
 		bytesNeeded = 0;
-		if (!QueryServiceConfig2A(
-			srvHandle,
-			SERVICE_CONFIG_DESCRIPTION,
-			nullptr,
-			0,
-			&bytesNeeded))
-		{
-			if (ERROR_INSUFFICIENT_BUFFER == ::GetLastError())
-			{
+		if (!QueryServiceConfig2A(srvHandle, SERVICE_CONFIG_DESCRIPTION, nullptr, 0, &bytesNeeded)) {
+			if (ERROR_INSUFFICIENT_BUFFER == ::GetLastError()) {
 				std::vector<unsigned char> buffer(bytesNeeded, 0);
 
-				if (QueryServiceConfig2A(
-					srvHandle,
-					SERVICE_CONFIG_DESCRIPTION,
-					reinterpret_cast<LPBYTE>(buffer.data()),
-					bytesNeeded,
-					&bytesNeeded))
-				{
+				if (QueryServiceConfig2A(srvHandle, SERVICE_CONFIG_DESCRIPTION, reinterpret_cast<LPBYTE>(buffer.data()), bytesNeeded, &bytesNeeded)) {
 					auto lpsd = reinterpret_cast<LPSERVICE_DESCRIPTIONA>(buffer.data());
 
 					description = lpsd->lpDescription;
@@ -163,12 +137,10 @@ public:
 	}
 
 private:
-	static std::vector<string> SplitDoubleNullTerminatedString(LPSTR text)
-	{
+	static std::vector<string> SplitDoubleNullTerminatedString(LPSTR text) {
 		std::vector<string> texts;
 		LPSTR ptr = text;
-		do 
-		{
+		do {
 			texts.push_back(ptr);
 			ptr += texts.back().size() + 1;
 		} while (*ptr != '\0');
