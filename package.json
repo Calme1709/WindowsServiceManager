@@ -1,0 +1,29 @@
+{
+  "name": "nodejs-windows-service-controller",
+  "version": "1.1.2",
+  "description": "A module for NodeJS which allows for interaction with windows services",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node-gyp configure && node-gyp build && tsc && node bin/copybuild.js",
+    "postinstall": "npx build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Calme1709/NodeJS-Windows-Services-Controller.git"
+  },
+  "keywords": [
+    "Windows",
+    "Service",
+    "Controller"
+  ],
+  "author": "Callum Law",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Calme1709/NodeJS-Windows-Services-Controller/issues"
+  },
+  "homepage": "https://github.com/Calme1709/NodeJS-Windows-Services-Controller#readme",
+  "dependencies": {
+    "node-addon-api": "^3.1.0"
+  }
+}
