@@ -70,7 +70,7 @@ public:
 			srvHandle,
 			SERVICE_NO_CHANGE,
 			SERVICE_NO_CHANGE,
-			static_cast<DWORD>(control),         
+			static_cast<DWORD>(control),
 			nullptr,
 			nullptr,
 			nullptr,
