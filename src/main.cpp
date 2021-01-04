@@ -1,7 +1,5 @@
 #include "main.h"
 
-#include <iostream>
-
 Napi::Object WinSvcManager::Init(Napi::Env env, Napi::Object exports) {
 	Napi::Function func = DefineClass(env, "WinSvcManager", {
 		StaticMethod("getServices", &WinSvcManager::GetServices),
@@ -64,8 +62,6 @@ Napi::Value WinSvcManager::GetServices(const Napi::CallbackInfo& info) {
 
 Napi::Value WinSvcManager::CanPauseAndContinue(const Napi::CallbackInfo& info) {
 	auto canPauseAndContinue = this->service->CanPauseContinue();
-
-	cout << "Can pause and continue: " << canPauseAndContinue;
 
 	return Napi::Boolean::New(info.Env(), canPauseAndContinue);
 }
