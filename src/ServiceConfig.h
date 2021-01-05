@@ -104,7 +104,7 @@ public:
 		auto bytesNeeded = DWORD{ 0 };
 
 		if (!QueryServiceConfigA(srvHandle, nullptr, 0, &bytesNeeded)) {
-			if (ERROR_INSUFFICIENT_BUFFER == ::GetLastError()) {
+			if (ERROR_INSUFFICIENT_BUFFER == GetLastError()) {
 				std::vector<unsigned char> buffer(bytesNeeded, 0);
 
 				auto lpsc = reinterpret_cast<LPQUERY_SERVICE_CONFIGA>(buffer.data());
@@ -124,7 +124,7 @@ public:
 
 		bytesNeeded = 0;
 		if (!QueryServiceConfig2A(srvHandle, SERVICE_CONFIG_DESCRIPTION, nullptr, 0, &bytesNeeded)) {
-			if (ERROR_INSUFFICIENT_BUFFER == ::GetLastError()) {
+			if (ERROR_INSUFFICIENT_BUFFER == GetLastError()) {
 				std::vector<unsigned char> buffer(bytesNeeded, 0);
 
 				if (QueryServiceConfig2A(srvHandle, SERVICE_CONFIG_DESCRIPTION, reinterpret_cast<LPBYTE>(buffer.data()), bytesNeeded, &bytesNeeded)) {

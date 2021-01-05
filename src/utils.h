@@ -1,42 +1,16 @@
-#include <locale>
-#include <codecvt>
+#pragma once
 
-#include "ServiceController.h"
 #include <napi.h>
+#include <string>
+#include "ServiceController.h"
 
 using namespace std;
+using namespace Napi;
 
-string GetLastErrorString() {
-	//Get the error message, if any.
-    DWORD errorMessageID = GetLastError();
-    if(errorMessageID == 0){
-        return std::string(); //No error message has been recorded
-	}
-
-    LPSTR messageBuffer = nullptr;
-    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
-
-    std::string message(messageBuffer, size);
-
-    //Free the buffer.
-    LocalFree(messageBuffer);
-
-    return message;
-}
-
-ServiceStartType StringToServiceStartType(string startType) {
-	if(startType == "Boot") return ServiceStartType::Boot;
-	if(startType == "System") return ServiceStartType::System;
-	if(startType == "Auto") return ServiceStartType::Auto;
-	if(startType == "Demand") return ServiceStartType::Demand;
-	
-	return ServiceStartType::Disabled;
-}
-
-void PushToNapiArray(Napi::Array array, Napi::Value value) {
-    array.Set(array.Length(), value);
-}
-
-const char *c_str(const std::string *str) {
-    return str == nullptr ? nullptr : str->c_str();
-}
+class Utils {
+public:
+	static string GetLastErrorString();
+	static ServiceStartType StringToServiceStartType(string startType);
+	static void PushToNapiArray(Array array, Value value);
+	static const char *c_str(const string *str);
+};
