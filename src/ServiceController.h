@@ -236,40 +236,52 @@ private:
 		return success;
 	}
 
-	bool StopDependentServices() {
-		auto ess = ENUM_SERVICE_STATUS{ 0 };
+	std::vector<LPSTR> GetDependentServices() {
 		auto bytesNeeded = DWORD{ 0 };
 		auto count = DWORD{ 0 };
+		auto services = vector<LPSTR>();
 
 		if (!EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, nullptr, 0, &bytesNeeded, &count)) {
 			if (GetLastError() != ERROR_MORE_DATA) {
-				return false;
+				throw ERROR_MORE_DATA;
 			}
 
 			std::vector<unsigned char> buffer(bytesNeeded, 0);
 
-			if (!EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data()), bytesNeeded, &bytesNeeded, &count)) {
-				return false;
+			auto result = EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data()), bytesNeeded, &bytesNeeded, &count);
+
+			if (!result) {
+				throw GetLastError();
 			}
 
 			for (auto i = DWORD{ 0 }; i < count; ++i) {
 				auto ess = static_cast<ENUM_SERVICE_STATUSA>(*(reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data() + i)));
+				
+				services.push_back(ess.lpServiceName);
+			}
+		}
 
-				ServiceHandle handle = OpenServiceA(scHandle, ess.lpServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS);
+		return services;
+	}
 
-				if (!handle) {
-					return false;
-				}
+	bool StopDependentServices() {
+		auto services = GetDependentServices();
 
-				auto ssp = SERVICE_STATUS_PROCESS{ 0 };
+		for(auto service : services) {
+			ServiceHandle handle = OpenServiceA(scHandle, service, SERVICE_STOP | SERVICE_QUERY_STATUS);
 
-				if (!ChangeServiceStatus(handle, SERVICE_CONTROL_STOP, ssp)) {
-					return false;
-				}
+			if (!handle) {
+				return false;
+			}
 
-				if (!WaitForStatus(handle, ssp, ServiceStatus::Stopped)) {
-					return false;
-				}
+			auto ssp = SERVICE_STATUS_PROCESS{ 0 };
+
+			if (!ChangeServiceStatus(handle, SERVICE_CONTROL_STOP, ssp)) {
+				return false;
+			}
+
+			if (!WaitForStatus(handle, ssp, ServiceStatus::Stopped)) {
+				return false;
 			}
 		}
 
