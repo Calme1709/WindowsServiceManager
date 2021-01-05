@@ -162,6 +162,34 @@ public:
 
 	string GetServiceName() const { return srvName; }
 
+	std::vector<LPSTR> GetDependentServices() {
+		auto bytesNeeded = DWORD{ 0 };
+		auto count = DWORD{ 0 };
+		auto services = vector<LPSTR>();
+
+		if (!EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, nullptr, 0, &bytesNeeded, &count)) {
+			if (GetLastError() != ERROR_MORE_DATA) {
+				throw ERROR_MORE_DATA;
+			}
+
+			std::vector<unsigned char> buffer(bytesNeeded, 0);
+
+			auto result = EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data()), bytesNeeded, &bytesNeeded, &count);
+
+			if (!result) {
+				throw GetLastError();
+			}
+
+			for (auto i = DWORD{ 0 }; i < count; ++i) {
+				auto ess = static_cast<ENUM_SERVICE_STATUSA>(*(reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data() + i)));
+				
+				services.push_back(ess.lpServiceName);
+			}
+		}
+
+		return services;
+	}
+
 private:
 	ServiceHandle scHandle;
 	ServiceHandle srvHandle;
@@ -234,34 +262,6 @@ private:
 		}
 
 		return success;
-	}
-
-	std::vector<LPSTR> GetDependentServices() {
-		auto bytesNeeded = DWORD{ 0 };
-		auto count = DWORD{ 0 };
-		auto services = vector<LPSTR>();
-
-		if (!EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, nullptr, 0, &bytesNeeded, &count)) {
-			if (GetLastError() != ERROR_MORE_DATA) {
-				throw ERROR_MORE_DATA;
-			}
-
-			std::vector<unsigned char> buffer(bytesNeeded, 0);
-
-			auto result = EnumDependentServicesA(srvHandle, SERVICE_ACTIVE, reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data()), bytesNeeded, &bytesNeeded, &count);
-
-			if (!result) {
-				throw GetLastError();
-			}
-
-			for (auto i = DWORD{ 0 }; i < count; ++i) {
-				auto ess = static_cast<ENUM_SERVICE_STATUSA>(*(reinterpret_cast<LPENUM_SERVICE_STATUSA>(buffer.data() + i)));
-				
-				services.push_back(ess.lpServiceName);
-			}
-		}
-
-		return services;
 	}
 
 	bool StopDependentServices() {
