@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "ServiceContants.h"
-#include "ServiceHandle.h"
+#include "ServiceHandle.hpp"
+#include "ServiceConstants.hpp"
 #include "utils.cpp"
 
 #include <vector>
