@@ -1,4 +1,6 @@
-#include "utils.h"
+#pragma once
+
+#include "utils.hpp"
 
 void Utils::PushToNapiArray(Array array, Value value) {
     array.Set(array.Length(), value);
@@ -34,3 +36,14 @@ string Utils::GetLastErrorString() {
 
     return message;
 }
+
+std::vector<string> Utils::SplitDoubleNullTerminatedString(LPSTR text) {
+		std::vector<string> texts;
+		LPSTR ptr = text;
+		do {
+			texts.push_back(ptr);
+			ptr += texts.back().size() + 1;
+		} while (*ptr != '\0');
+
+		return texts;
+	}

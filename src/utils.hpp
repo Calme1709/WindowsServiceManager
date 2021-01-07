@@ -2,7 +2,7 @@
 
 #include <napi.h>
 #include <string>
-#include "ServiceController.h"
+#include "ServiceConstants.hpp"
 
 using namespace std;
 using namespace Napi;
@@ -13,4 +13,5 @@ public:
 	static ServiceStartType StringToServiceStartType(string startType);
 	static void PushToNapiArray(Array array, Value value);
 	static const char *c_str(const string *str);
+	static std::vector<string> Utils::SplitDoubleNullTerminatedString(LPSTR text);
 };
