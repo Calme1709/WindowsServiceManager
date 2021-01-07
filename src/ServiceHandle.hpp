@@ -4,7 +4,6 @@
 #pragma once
 
 #include <windows.h>
-#include <Winsvc.h>
 
 class ServiceHandle {
 	SC_HANDLE _handle = nullptr;

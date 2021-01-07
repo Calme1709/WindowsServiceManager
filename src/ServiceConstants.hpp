@@ -4,8 +4,6 @@
 #pragma once
 
 #include <windows.h>
-#include <Winsvc.h>
-#include <string>
 
 using namespace std;
 
