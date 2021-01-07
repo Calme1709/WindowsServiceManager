@@ -6,6 +6,7 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "node-gyp configure && node-gyp build && tsc && node bin/copybuild.js",
+		"build:dev": "node-gyp configure && node-gyp build --debug && tsc && node bin/copybuild.js",
 		"postinstall": "npx build"
 	},
 	"repository": {
