@@ -1,6 +1,6 @@
 #include "ServiceEnumerator.hpp"
 
-std::vector<ServiceStatusProcess> ServiceEnumerator::EnumerateServices(ServiceType const type = ServiceType::All, ServiceState const state = ServiceState::All, string const * machine = nullptr, string const * dbname = nullptr, string const * groupName = nullptr) {
+std::vector<ServiceStatusProcess> ServiceEnumerator::EnumerateServices(ServiceType const type, ServiceState const state, string const * machine, string const * dbname, string const * groupName) {
 	std::vector<ServiceStatusProcess> ssps;
 
 	auto scHandle = ServiceHandle { OpenSCManagerA(Utils::c_str(machine), Utils::c_str(dbname), SC_MANAGER_ENUMERATE_SERVICE) };
