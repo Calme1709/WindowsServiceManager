@@ -8,7 +8,7 @@
 #include <chrono>
 #include <map>
 
-#include "ServiceConfig.hpp"
+#include "ServiceConfig.cpp"
 #include "ServiceHandle.hpp"
 
 using namespace std::literals::chrono_literals;

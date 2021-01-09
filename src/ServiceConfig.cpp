@@ -1,6 +1,6 @@
 #include "ServiceConfig.hpp"
 
-#include "Utils.hpp"
+#include "Utils.cpp"
 
 void ServiceConfig::Refresh() {
 	auto bytesNeeded = DWORD{ 0 };

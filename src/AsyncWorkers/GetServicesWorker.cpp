@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GetServicesWorker.hpp"
-#include "../ServiceEnumerator.hpp"
+#include "../ServiceEnumerator.cpp"
 
 #include "../utils.cpp"
 
