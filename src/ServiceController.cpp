@@ -13,6 +13,7 @@ ServiceController::ServiceController(string name, DWORD access) {
 		if (!srvHandle) {
 			scHandle = nullptr;
 		} else {
+			connected = true;
 			auto bytesNeeded = DWORD{ 0 };
 			auto ssp = SERVICE_STATUS_PROCESS{ 0 };
 

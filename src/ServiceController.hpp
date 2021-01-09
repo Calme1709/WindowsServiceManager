@@ -16,6 +16,8 @@ using namespace std::literals::chrono_literals;
 class ServiceController {
 public:
 	ServiceController(string name, DWORD access = SERVICE_ALL_ACCESS);
+	
+	bool connected = false;
 
 	ServiceStatus GetStatus();
 	ServiceConfig GetServiceConfig();
