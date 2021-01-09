@@ -38,12 +38,12 @@ string Utils::GetLastErrorString() {
 }
 
 std::vector<string> Utils::SplitDoubleNullTerminatedString(const LPSTR text) {
-		std::vector<string> texts;
-		LPSTR ptr = text;
-		do {
-			texts.push_back(ptr);
-			ptr += texts.back().size() + 1;
-		} while (*ptr != '\0');
+	std::vector<string> texts;
+	LPSTR ptr = text;
+	do {
+		texts.push_back(ptr);
+		ptr += texts.back().size() + 1;
+	} while (*ptr != '\0');
 
-		return texts;
-	}
+	return texts;
+}
