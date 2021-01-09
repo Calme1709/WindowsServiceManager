@@ -81,6 +81,8 @@ Value WinSvcManager::GetServices(const CallbackInfo& info) {
 	return deferred.Promise();
 }
 
+//GetDevices
+
 Value WinSvcManager::CanPauseAndContinue(const CallbackInfo& info) {
 	return Boolean::New(info.Env(), service->CanAcceptControl(ServiceControls::PauseAndContinue));
 }
@@ -103,24 +105,14 @@ Value WinSvcManager::DependentServices(const CallbackInfo& info) {
 	return array;
 }
 
-Value WinSvcManager::ServiceName(const CallbackInfo& info) {
-	return String::New(info.Env(), service->GetServiceName());
-}
-
 Value WinSvcManager::DisplayName(const CallbackInfo& info) {
 	return String::New(info.Env(), service->GetServiceConfig().GetDisplayName());
 }
 
-Value WinSvcManager::Continue(const CallbackInfo& info) {
-	if(service->CanAcceptControl(ServiceControls::PauseAndContinue) && service->GetStatus() == ServiceStatus::Paused && !service->Continue()) {
-    	Error::New(info.Env(), String::New(info.Env(), Utils::GetLastErrorString())).ThrowAsJavaScriptException();
-    }
+//MachineName
 
-	return info.Env().Undefined();
-}
-
-Value WinSvcManager::ServiceType(const CallbackInfo& info) {
-	return Napi::Number::New(info.Env(), (double)service->GetServiceConfig().GetType());
+Value WinSvcManager::ServiceName(const CallbackInfo& info) {
+	return String::New(info.Env(), service->GetServiceName());
 }
 
 Value WinSvcManager::ServicesDependedOn(const CallbackInfo& info) {
@@ -134,6 +126,27 @@ Value WinSvcManager::ServicesDependedOn(const CallbackInfo& info) {
 
 	return array;
 }
+
+Value WinSvcManager::ServiceType(const CallbackInfo& info) {
+	return Napi::Number::New(info.Env(), (double)service->GetServiceConfig().GetType());
+}
+
+//Close
+
+Value WinSvcManager::Continue(const CallbackInfo& info) {
+	if(service->CanAcceptControl(ServiceControls::PauseAndContinue) && service->GetStatus() == ServiceStatus::Paused && !service->Continue()) {
+    	Error::New(info.Env(), String::New(info.Env(), Utils::GetLastErrorString())).ThrowAsJavaScriptException();
+    }
+
+	return info.Env().Undefined();
+}
+
+//Dispose
+//ExecuteCommand
+//Pause
+//Start
+//Stop
+//WaitForStatus
 
 Object InitAll(Env env, Object exports) {
 	WinSvcManager::Init(env, exports);
