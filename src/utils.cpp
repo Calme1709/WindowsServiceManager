@@ -2,7 +2,7 @@
 
 #include "utils.hpp"
 
-void Utils::PushToNapiArray(Array array, Value value) {
+void Utils::PushToNapiArray(Array array, const Value value) {
     array.Set(array.Length(), value);
 }
 
@@ -10,7 +10,7 @@ const char * Utils::c_str(const string *str) {
     return str == nullptr ? nullptr : str->c_str();
 }
 
-ServiceStartType Utils::StringToServiceStartType(string startType) {
+ServiceStartType Utils::StringToServiceStartType(const string startType) {
 	if(startType == "Boot") return ServiceStartType::Boot;
 	if(startType == "System") return ServiceStartType::System;
 	if(startType == "Auto") return ServiceStartType::Auto;
@@ -37,7 +37,7 @@ string Utils::GetLastErrorString() {
     return message;
 }
 
-std::vector<string> Utils::SplitDoubleNullTerminatedString(LPSTR text) {
+std::vector<string> Utils::SplitDoubleNullTerminatedString(const LPSTR text) {
 		std::vector<string> texts;
 		LPSTR ptr = text;
 		do {
