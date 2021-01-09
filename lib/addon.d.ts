@@ -86,6 +86,11 @@ export default class WindowsServiceManager {
 	public readonly ServicesDependedOn: WindowsServiceManager[];
 
 	/**
+	 * The type of service that this WindowsServiceManager is associated with.
+	 */
+	public readonly ServiceType: ServiceType;
+
+	/**
 	 * How the service starts.
 	 */
 	public readonly StartType: ServiceStartType;
