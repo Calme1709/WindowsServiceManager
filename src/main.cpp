@@ -1,118 +1,144 @@
-#include "main.h"
+#pragma once
 
-Napi::Object WinSvcManager::Init(Napi::Env env, Napi::Object exports) {
-	Napi::Function func = DefineClass(env, "WinSvcManager", {
-		StaticMethod("getServices", &WinSvcManager::GetServices),
-		InstanceAccessor("canPauseAndContinue", &WinSvcManager::CanPauseAndContinue, nullptr, napi_default),
-		
-		InstanceMethod("changeStartupType", &WinSvcManager::ChangeStartupType)
+#include "main.hpp"
+
+#include "utils.cpp"
+#include <napi.h>
+
+#include "AsyncWorkers/GetServicesWorker.cpp"
+
+#include <iostream>
+
+Object WinSvcManager::Init(Napi::Env env, Object exports) {
+	Function func = DefineClass(env, "WinSvcManager", {
+		StaticMethod("GetServices", &WinSvcManager::GetServices),
+		//GetDevices
+		InstanceAccessor("CanPauseAndContinue", &WinSvcManager::CanPauseAndContinue, nullptr, napi_default),
+		InstanceAccessor("CanShutdown", &WinSvcManager::CanShutdown, nullptr, napi_default),
+		InstanceAccessor("CanStop", &WinSvcManager::CanStop, nullptr, napi_default),
+		InstanceAccessor("DependentServices", &WinSvcManager::DependentServices, nullptr, napi_default),
+		InstanceAccessor("DisplayName", &WinSvcManager::DisplayName, nullptr, napi_default),
+		//MachineName
+		InstanceAccessor("ServiceName", &WinSvcManager::ServiceName, nullptr, napi_default),
+		InstanceAccessor("ServicesDependedOn", &WinSvcManager::ServicesDependedOn, nullptr, napi_default),
+		InstanceAccessor("ServiceType", &WinSvcManager::ServiceType, nullptr, napi_default),
+		//StartType
+		//Status
+
+		//Close
+		//Continue
+		//Dispose
+		//ExecuteCommand
+		//Pause
+		//Start
+		//Stop
+		//WaitForStatus
+
 	});
 
-	Napi::FunctionReference* constructor = new Napi::FunctionReference();
-	*constructor = Napi::Persistent(func);
+	FunctionReference* constructor = new FunctionReference();
+	*constructor = Persistent(func);
 	env.SetInstanceData(constructor);
 
 	exports.Set("default", func);
 	return exports;
 }
 
-WinSvcManager::WinSvcManager(const Napi::CallbackInfo& info) : Napi::ObjectWrap<WinSvcManager>(info) {
+WinSvcManager::WinSvcManager(const CallbackInfo& info) : ObjectWrap<WinSvcManager>(info) {
 	#ifndef _WIN32
-		Napi::Error::New(info.Env(), "This library is only supported on windows machines").ThrowAsJavaScriptException();
+		Error::New(info.Env(), "This library is only supported on windows machines").ThrowAsJavaScriptException();
 
 		return;
 	#endif
 
 	if (info.Length() <= 0 || !info[0].IsString()) {
-		Napi::TypeError::New(info.Env(), "Expected a string for service name").ThrowAsJavaScriptException();
+		TypeError::New(info.Env(), "Expected a string for service name").ThrowAsJavaScriptException();
 
 		return;
 	}
 
-	this->service = new ServiceController(info[0].As<Napi::String>().Utf8Value());
+	auto serviceAccess = SC_MANAGER_ALL_ACCESS;
+
+	service = new ServiceController(info[0].As<String>().Utf8Value(), serviceAccess);
+
+	if(!service->connected) {
+		Error::New(info.Env(), Utils::GetLastErrorString()).ThrowAsJavaScriptException();
+	}
 }
 
-Napi::Value WinSvcManager::GetServices(const Napi::CallbackInfo& info) {
-	auto env = info.Env();
-	auto promise = Napi::Promise::Deferred::New(env);
-	auto array = Napi::Array::New(env);
+Value WinSvcManager::GetServices(const CallbackInfo& info) {
+	//TODO: Support remote machines
+	auto deferred = Promise::Deferred::New(info.Env());
 
-	for(auto service : ServiceEnumerator::EnumerateServices()) {
-		Napi::Object serviceStatus = Napi::Object::New(env);
-		serviceStatus.Set("serviceType", Napi::Number::New(env, service.Status.dwServiceType));
-		serviceStatus.Set("currentState", Napi::Number::New(env, service.Status.dwCurrentState));
-		serviceStatus.Set("controlsAccepted", Napi::Number::New(env, service.Status.dwControlsAccepted));
-		serviceStatus.Set("win32ExitCode", Napi::Number::New(env, service.Status.dwWin32ExitCode));
-		serviceStatus.Set("serviceSpecificExitCode", Napi::Number::New(env, service.Status.dwServiceSpecificExitCode));
-		serviceStatus.Set("checkPoint", Napi::Number::New(env, service.Status.dwCheckPoint));
-		serviceStatus.Set("waitHint", Napi::Number::New(env, service.Status.dwWaitHint));
+	auto asyncWorker = new GetServicesWorker(
+		info.Env(),
+		deferred,
+		info.Env().GetInstanceData<FunctionReference>()
+	);
 
-		Napi::Object serviceInfo = Napi::Object::New(env);
-		serviceInfo.Set("displayName", Napi::String::New(env, service.DisplayName));
-		serviceInfo.Set("serviceName", Napi::String::New(env, service.ServiceName));
-		serviceInfo.Set("status", serviceStatus);
+	asyncWorker->Queue();
 
-		PushToNapiArray(array, serviceInfo);
+	return deferred.Promise();
+}
+
+Value WinSvcManager::CanPauseAndContinue(const CallbackInfo& info) {
+	return Boolean::New(info.Env(), service->CanAcceptControl(ServiceControls::PauseAndContinue));
+}
+
+Value WinSvcManager::CanShutdown(const CallbackInfo& info) {
+	return Boolean::New(info.Env(), service->CanAcceptControl(ServiceControls::ShutdownNotification));
+}
+
+Value WinSvcManager::CanStop(const CallbackInfo& info) {
+	return Boolean::New(info.Env(), service->CanAcceptControl(ServiceControls::Stop));
+}
+
+Value WinSvcManager::DependentServices(const CallbackInfo& info) {
+	auto array = Array::New(info.Env());
+
+	for(auto service : service->GetDependentServices()) {
+		Utils::PushToNapiArray(array, info.Env().GetInstanceData<FunctionReference>()->New({ String::New(info.Env(), service) }));
 	}
 
-	promise.Resolve(array);
-
-	return promise.Promise();
+	return array;
 }
 
-Napi::Value WinSvcManager::CanPauseAndContinue(const Napi::CallbackInfo& info) {
-	auto canPauseAndContinue = this->service->CanPauseContinue();
-
-	return Napi::Boolean::New(info.Env(), canPauseAndContinue);
+Value WinSvcManager::ServiceName(const CallbackInfo& info) {
+	return String::New(info.Env(), service->GetServiceName());
 }
 
-Napi::Promise WinSvcManager::Continue(const Napi::CallbackInfo& info) {
-	auto env = info.Env();
+Value WinSvcManager::DisplayName(const CallbackInfo& info) {
+	return String::New(info.Env(), service->GetServiceConfig().GetDisplayName());
+}
 
-	auto promise = Napi::Promise::Deferred::New(env);
+Value WinSvcManager::Continue(const CallbackInfo& info) {
+	if(service->CanAcceptControl(ServiceControls::PauseAndContinue) && service->GetStatus() == ServiceStatus::Paused && !service->Continue()) {
+    	Error::New(info.Env(), String::New(info.Env(), Utils::GetLastErrorString())).ThrowAsJavaScriptException();
+    }
 
-	if(this->service->CanPauseContinue() && this->service->GetStatus() == ServiceStatus::Paused) {
-		if(this->service->Continue()) {
-			promise.Resolve(env.Undefined());
-		} else {
-			promise.Reject(Napi::Error::New(env, GetLastErrorString()).Value());
-		}
+	return info.Env().Undefined();
+}
+
+Value WinSvcManager::ServiceType(const CallbackInfo& info) {
+	return Napi::Number::New(info.Env(), (double)service->GetServiceConfig().GetType());
+}
+
+Value WinSvcManager::ServicesDependedOn(const CallbackInfo& info) {
+	auto array = Array::New(info.Env());
+
+	for(auto dependency : service->GetServiceConfig().GetDependencies()) {
+		FunctionReference* constructor = info.Env().GetInstanceData<FunctionReference>();
+
+		Utils::PushToNapiArray(array, constructor->New({ String::New(info.Env(), dependency) }));
 	}
 
-	return promise.Promise();
+	return array;
 }
 
-Napi::Value WinSvcManager::ChangeStartupType(const Napi::CallbackInfo& info) {
-	auto env = info.Env();
-	auto promise = Napi::Promise::Deferred::New(env);
-
-	if(info.Length() <= 0 || !info[0].IsString()) {
-		promise.Reject(Napi::TypeError::New(env, "Expected a string for the first argument").Value());
-	} else {
-		std::vector<string> startTypes { "Boot", "System", "Auto", "Demand", "Disabled" };
-
-		auto startType = info[0].As<Napi::String>().Utf8Value();
-
-		if(find(startTypes.begin(), startTypes.end(), startType) == startTypes.end()) {
-			promise.Reject(Napi::TypeError::New(env, "Expected the first argument to be one of Auto, Boot, Disabled, Demand or System").Value());
-		}
-
-		ServiceStartType serviceStartType = StringToServiceStartType(startType);
-
-		if(this->service->GetServiceConfig().ChangeStartType(serviceStartType)) {
-			promise.Resolve(env.Undefined());
-		} else {
-			promise.Reject(Napi::Error::New(env, GetLastErrorString()).Value());
-		}
-	}
-
-	return promise.Promise();
-}
-
-Napi::Object initAll(Napi::Env env, Napi::Object exports) {
+Object InitAll(Env env, Object exports) {
 	WinSvcManager::Init(env, exports);
 
 	return exports;
 }
 
-NODE_API_MODULE(addon, initAll)
+NODE_API_MODULE(addon, InitAll)
