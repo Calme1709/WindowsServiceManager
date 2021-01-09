@@ -20,17 +20,17 @@ private:
 	static Napi::Value GetDevices(const CallbackInfo& info);
 
 	//Accessors
-	Napi::Value CanPauseAndContinue(const CallbackInfo& info);
-	Napi::Value CanShutdown(const CallbackInfo& info);
-	Napi::Value CanStop(const CallbackInfo& info);
-	Napi::Value DependentServices(const CallbackInfo& info);
-	Napi::Value DisplayName(const CallbackInfo& info);
-	Napi::Value MachineName(const CallbackInfo& info);
-	Napi::Value ServiceName(const CallbackInfo& info);
-	Napi::Value ServicesDependedOn(const CallbackInfo& info);
-	Napi::Value ServiceType(const CallbackInfo& info);
-	Napi::Value StartType(const CallbackInfo& info);
-	Napi::Value Status(const CallbackInfo& info);
+	Napi::Value GetCanPauseAndContinue(const CallbackInfo& info);
+	Napi::Value GetCanShutdown(const CallbackInfo& info);
+	Napi::Value GetCanStop(const CallbackInfo& info);
+	Napi::Value GetDependentServices(const CallbackInfo& info);
+	Napi::Value GetDisplayName(const CallbackInfo& info);
+	Napi::Value GetMachineName(const CallbackInfo& info);
+	Napi::Value GetServiceName(const CallbackInfo& info);
+	Napi::Value GetServicesDependedOn(const CallbackInfo& info);
+	Napi::Value GetServiceType(const CallbackInfo& info);
+	Napi::Value GetStartType(const CallbackInfo& info);
+	Napi::Value GetStatus(const CallbackInfo& info);
 
 	//Methods
 	Napi::Value Close(const CallbackInfo& info);
