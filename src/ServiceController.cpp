@@ -192,9 +192,13 @@ bool ServiceController::ChangeServiceStatus(SC_HANDLE const handle, DWORD const 
 }
 
 bool ServiceController::WaitForStatus(SC_HANDLE const handle, SERVICE_STATUS_PROCESS& ssp, ServiceStatus const desireStatus, std::chrono::milliseconds const timeout) {
-	auto success = ssp.dwCurrentState == static_cast<DWORD>(desireStatus);
+	auto success = false;;
 
-	if (!success && handle) {
+	if(ssp.dwCurrentState == static_cast<DWORD>(desireStatus)) {
+		return true;
+	}
+
+	if(handle) {
 		auto start = std::chrono::high_resolution_clock::now();
 		auto waitTime = GetWaitTime(ssp.dwWaitHint);
 
@@ -212,7 +216,7 @@ bool ServiceController::WaitForStatus(SC_HANDLE const handle, SERVICE_STATUS_PRO
 				break;
 			}
 
-			if (std::chrono::high_resolution_clock::now() - start > timeout) {
+			if (timeout != -1ms && std::chrono::high_resolution_clock::now() - start > timeout) {
 				break;
 			}
 		}

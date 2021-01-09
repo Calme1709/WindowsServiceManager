@@ -25,7 +25,7 @@ public:
 	bool Pause();
 	bool Continue();
 	bool Delete();
-	bool WaitForStatus(ServiceStatus desiredStatus, std::chrono::milliseconds const timeout = 30000ms);
+	bool WaitForStatus(ServiceStatus desiredStatus, std::chrono::milliseconds const timeout);
 
 	bool CanAcceptControl(ServiceControls const control) const {
 		auto it = acceptedControls.find(control);
@@ -56,6 +56,6 @@ private:
 
 	static std::chrono::milliseconds GetWaitTime(DWORD const waitHint);
 	static bool ChangeServiceStatus(SC_HANDLE const handle, DWORD const controlCode, SERVICE_STATUS_PROCESS& ssp);
-	static bool WaitForStatus(SC_HANDLE const handle, SERVICE_STATUS_PROCESS& ssp, ServiceStatus const desireStatus, std::chrono::milliseconds const timeout = 30000ms);
+	static bool WaitForStatus(SC_HANDLE const handle, SERVICE_STATUS_PROCESS& ssp, ServiceStatus const desireStatus, std::chrono::milliseconds const timeout = -1ms);
 	bool StopDependentServices();
 };
